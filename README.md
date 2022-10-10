@@ -1,6 +1,6 @@
 # SpotiTube
 A basic Python program that converts a Spotify playlist into a new YouTube playlist using the Spotify and YouTube APIs. <br>
-Users are able to input the link to their Spotify playlist, and once this has been validated, they are able to generate a new YouTube playlist and choose the following parameters for it: the name of the playlist, the privacy status of the playlist (public, private or unlisted) and whether they want the songs to be converted to lyrics videos or music videos. <br><br>
+Users are able to input the link to their Spotify playlist, and once this has been validated, they are able to generate a new YouTube playlist and choose the following parameters for it: the name of the playlist, the privacy status of the playlist (public, private or unlisted) and whether they want the songs to be converted to lyrics videos or music videos. Furthermore, once a playlist has been created, the user is able to export data about the Spotify playlist as a CSV file as well as another CSV file that contains the video IDs of all the songs added to their YouTube playlist.<br><br>
 # Getting Started
 
 ## Prerequisites
@@ -27,6 +27,7 @@ You are required to get the API key from Spotify, as well as the API key and OAu
 * Choose the name of your new playlist
 * Creates the playlist using the user's YouTube account
 * Generates a link that takes the user to their playlist<br>
+* Allows the user to export data about their Spotify and YouTube playlists in two seperate CSV files
 <div dr="rtl"><ins>Future Improvements</u></div>
 
 * Give user more specific instructions on why their playlist could not be generated (e.g., they have input a link to an album instead of a playlist, they have input a playlist that is private so they need to make their playlist public)
