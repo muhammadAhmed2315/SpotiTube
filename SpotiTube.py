@@ -7,6 +7,8 @@ import googleapiclient.discovery
 import googleapiclient.errors
 import webbrowser
 import time
+import re
+import csv
 
 SPOTIFY_TEXT = "Enter the link to the Spotify playlist\n\
 you wish to convert to a YouTube playlist.\
@@ -32,6 +34,12 @@ NAME_TEXT = "What name your YouTube playlist will have"
 LINK_TEXT = "Clicking this button will take you to\n\
 your generated YouTube playlist"
 
+SPOTIFY_CSV_TEXT = 'Note: you can expand the window of\n\
+the directory selector.\n\
+A file name can only contain the\n\
+following characters:\n\
+- alphanumeric characters, underscores and hyphens'
+
 scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
 """
@@ -44,12 +52,60 @@ https://open.spotify.com/playlist/0fKSKzeJZOrxR49eIKbhMR?si=38549d3c9e314fa1 dan
 print(json.dumps(r.json(), indent=1))
 """
 
+csv_files_location = ""
+youtube_playlist_scraped = False
+youtube_playlist = []
 
 def main():
+    def disabler(*args):
+        for arg in args:
+            dpg.disable_item(arg)
+
+    def enabler(*args):
+        for arg in args:
+            dpg.enable_item(arg)
+            
     # boilerplate code for DPG
     dpg.create_context()
 
+    def create_double_csv(): # called by submit
+        global csv_files_location
+        global youtube_playlist_scraped
+        global youtube_playlist
+        fileName = dpg.get_value(div8_textbar)
+
+        if youtube_playlist_scraped:
+            if csv_files_location == "" or not re.search(r'^[a-zA-Z0-9_-]+$', fileName):
+                dpg.configure_item(div8_success_text, color=[255, 0, 0])
+                dpg.set_value(div8_success_text, "Make sure you have chosen a correct file name and a directory")
+            else:
+                dpg.configure_item(div8_success_text, color=[0, 255, 0])
+                dpg.set_value(div8_success_text, f"SUCCESS: Files saved as {fileName}_spotify.csv and {fileName}_youtube.csv at {csv_files_location}")
+
+                with open(csv_files_location + "\\" + fileName + "_spotify.csv", "w", newline="") as file:
+                    spotify_playlist = spotify_scraper(dpg.get_value(div1_textbar))
+                    writer = csv.DictWriter(file, fieldnames=["song", "album", "artists", "length"])
+                    writer.writeheader()
+                    for song in spotify_playlist:
+                        writer.writerow({"song": song["song"], "album": song["album"], "artists": song["artists"], "length": song["length"]})
+
+                with open(csv_files_location + "\\" + fileName + "_youtube.csv", "w", newline="") as file:
+                    writer = csv.DictWriter(file, fieldnames=["id"])
+                    writer.writeheader()
+                    for song in youtube_playlist:
+                        writer.writerow({"id": song})
+                youtube_playlist_scraped = False
+        else:
+            dpg.set_value(div8_success_text, "You must submit a playlist before you can export it")
+            dpg.configure_item(div8_success_text, color=[255, 0, 0])
+        
+    def callback(sender, app_data):
+        global csv_files_location
+        csv_files_location = app_data["file_path_name"]
+
     def check_spotify_link():
+        global youtube_playlist_scraped
+        youtube_playlist_scraped = False
         spotify_playlist = spotify_scraper(dpg.get_value(div1_textbar))
 
         if spotify_playlist == "Incorrect format for playlist URL" or spotify_playlist == "Playlist does not exist":
@@ -58,19 +114,17 @@ def main():
         else:
             dpg.set_value(div1_text, "Playlist Found")
             dpg.configure_item(div1_text, color=[0, 255, 0])
-            dpg.disable_item(div1_textbar)
-            dpg.disable_item(div1_submit)
-            dpg.enable_item(div2_radio)
-            dpg.enable_item(div3_radio)
-            dpg.enable_item(div4_textbar)
-            dpg.enable_item(div4_submit)
+            disabler(div1_textbar, div1_submit)
+            enabler(div2_radio, div3_radio, div4_textbar, div4_submit)
             return spotify_playlist
 
     def youtube_generator():
+        global youtube_playlist_scraped
+        global youtube_playlist
         # boilerplate code for YouTube API
         api_service_name = "youtube"
         api_version = "v3"
-        client_secrets_file = "client_secrets1.json"
+        client_secrets_file = "client_secrets.json"
 
         # Get credentials and create an API client
         flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
@@ -145,28 +199,23 @@ def main():
         )
             response = request.execute()
 
-        dpg.set_value(div5_text, "SUCCESS")
+        dpg.set_value(div5_text, "SUCCESS: Your playlist is available at the following link:")
         dpg.configure_item(div5_text, color=[0, 255, 0])
         dpg.set_value(div6_text, f"https://www.youtube.com/playlist?list={response['snippet']['playlistId']}")
         dpg.configure_item(div6_text, color=[0, 255, 0])
-        dpg.enable_item(div7_link)
+        enabler(div7_link, div1_textbar, div1_submit)
         dpg.set_item_callback(div7_link, callback=lambda:webbrowser.open(f"https://www.youtube.com/playlist?list={response['snippet']['playlistId']}"))
+        youtube_playlist_scraped = True
+        disabler(div2_radio, div3_radio, div4_textbar, div4_submit)
 
-        dpg.disable_item(div4_textbar)
-        dpg.disable_item(div4_submit)
-        dpg.disable_item(div3_radio)
-        dpg.disable_item(div2_radio)
-        dpg.enable_item(div1_textbar)
-        dpg.enable_item(div1_submit)
 
-    
     with dpg.window(tag="Primary Window"):
         # Enter your Spotify playlist link:
         dpg.add_text("Enter your Spotify playlist link:", tag="info_text_spotify_playlist_link")
         with dpg.tooltip("info_text_spotify_playlist_link"):
             dpg.add_text(SPOTIFY_TEXT)
         with dpg.group(horizontal=True):
-            div1_textbar = dpg.add_input_text(default_value="")
+            div1_textbar = dpg.add_input_text()
             dpg.set_item_width(div1_textbar, 550)
             div1_submit = dpg.add_button(label="Submit", callback=check_spotify_link)
         div1_text = dpg.add_text("", color=[37, 37, 38])
@@ -177,7 +226,6 @@ def main():
         with dpg.tooltip("info_text_lyrics_or_music"):
             dpg.add_text(LYRICS_TEXT)
         div2_radio = dpg.add_radio_button(("Lyrics videos", "Music videos"), horizontal=True, default_value="Lyrics videos")
-        dpg.disable_item(div2_radio)
         dpg.add_text()
 
         # Privacy status of playlist:
@@ -185,7 +233,6 @@ def main():
         with dpg.tooltip("info_text_privacy_status"):
             dpg.add_text(PRIVACY_TEXT)
         div3_radio = dpg.add_radio_button(("Public", "Private", "Unlisted"), horizontal=True, default_value="Public")
-        dpg.disable_item(div3_radio)
         dpg.add_text()
 
         # Enter the playlist name:    
@@ -193,25 +240,37 @@ def main():
         with dpg.tooltip("info_text_playlist_name"):
             dpg.add_text(NAME_TEXT)
         with dpg.group(horizontal=True):
-            div4_textbar = dpg.add_input_text(default_value="")
+            div4_textbar = dpg.add_input_text()
             dpg.set_item_width(div4_textbar, 550)
             div4_submit= dpg.add_button(label="Submit", callback=youtube_generator)
         div4_text = dpg.add_text("", color=[37, 37, 38])
-        dpg.disable_item(div4_textbar)
-        dpg.disable_item(div4_submit)
 
-        # text for succcess and playlist link
+        # text for success and playlist link
         div5_text = dpg.add_text("", color=[37, 37, 38])
         div6_text = dpg.add_text("", color=[37, 37, 38])
         div7_text = dpg.add_text("Generated Link:")
         div7_link = dpg.add_button(label="LINK", callback=lambda:webbrowser.open("https://google.com"))
         with dpg.tooltip(div7_text):
             dpg.add_text(LINK_TEXT)
-        dpg.disable_item(div7_link)
 
+        # searchbars for where to save each file
+        dpg.add_text("")
+        dpg.add_text("Download two CSV files containing information about your Spotify and YouTube playlists:", tag="div8_text")
+        with dpg.tooltip("div8_text"):
+            dpg.add_text(SPOTIFY_CSV_TEXT)
+        dpg.add_file_dialog(
+            directory_selector=True, show=False, callback=callback, tag="file_dialog_id")
+        with dpg.group(horizontal=True):
+            div8_textbar = dpg.add_input_text(default_value="File Name")
+            div8_directory_selector = dpg.add_button(label="Directory Selector", callback=lambda: dpg.show_item("file_dialog_id"))
+            div8_submit = dpg.add_button(label="SUBMIT", callback=create_double_csv)
+        div8_success_text = dpg.add_text("", color=[37, 37, 38])
+    
+        # disable divs 2 to 7 intially
+        disabler(div2_radio, div3_radio, div4_textbar, div4_submit, div7_link)
 
     # boilerplate code for DPG
-    dpg.create_viewport(title='SpotiTube', width=700, height=450)
+    dpg.create_viewport(title='SpotiTube', width=700, height=550)
     dpg.setup_dearpygui()
     dpg.show_viewport()
     dpg.set_viewport_resizable(False)
