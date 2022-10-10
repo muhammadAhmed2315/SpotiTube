@@ -16,7 +16,7 @@ pip install --upgrade google-auth-oauthlib google-auth-httplib2
 ```
 ## APIs
 You are required to get the API key from Spotify, as well as the API key and OAuth 2.0 Client IDs from Google.<br>
-* [Follow Step 1 on this guide to get an API key and an OAuth 2.0 client ID for the YouTube API](https://developers.google.com/youtube/v3/quickstart/python)
+* [Follow step 1 on this guide to get an API key and an OAuth 2.0 client ID for the YouTube API](https://developers.google.com/youtube/v3/quickstart/python)
 * [Follow the steps here to get CLIENT_ID and CLIENT_SECRET keys for the Spotify API](https://developer.spotify.com/documentation/web-api/quick-start/)<br><br>
 
 # Basic Functionality and Future Improvements
