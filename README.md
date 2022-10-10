@@ -35,4 +35,4 @@ You are required to get the API key from Spotify, as well as the API key and OAu
 * Another improvement is to verify the app via the Google Cloud Console, so that users don't have to input an authentication code. Furthermore, applying for a quota increase for the YouTube Data API v3, so that users are able to convert more songs in a single day. Note: this is not related to the code itself, but moreso the account that uses the YouTube API.
 <br><br>
 # Project Demo
-Video example: [https://youtu.be/WLLXYihEcyU](https://youtu.be/WLLXYihEcyU)
+Video example: [https://www.youtube.com/watch?v=5ACiHCeikwo](https://www.youtube.com/watch?v=5ACiHCeikwo)
