@@ -337,7 +337,6 @@ def spotify_scraper(playlist_link):
         # adds each song to the songs_list
         for row in items:
           # in format: song name, album name, song length, FOR LOOP for artists
-          #  songs_list.append(f'{row["track"]["name"]},{row["track"]["album"]["name"]},{row["track"]["duration_ms"]},')
             songs_list.append(dict())
             songs_list[counter]["song"] = row["track"]["name"]
             songs_list[counter]["album"] = row["track"]["album"]["name"]
@@ -355,7 +354,7 @@ def spotify_scraper(playlist_link):
     return songs_list
 
 
-def roundup(x: int) -> int:
+def roundup(x):
     """ Returns inputted integer rounded up to the nearest hundred """
     return int(math.ceil(x / 100.0)) * 100
 
