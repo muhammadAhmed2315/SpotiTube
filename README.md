@@ -6,13 +6,7 @@ Users are able to input the link to their Spotify playlist, and once this has be
 ## Prerequisites
 Make sure you have Python3 installed and you use it to run this program.
 ```
-pip install dearpygui
-```
-```
-pip install --upgrade google-api-python-client
-```
-```
-pip install --upgrade google-auth-oauthlib google-auth-httplib2
+pip install -r requirements.txt
 ```
 ## APIs
 You are required to get the API key from Spotify, as well as the API key and OAuth 2.0 Client IDs from Google.<br>
